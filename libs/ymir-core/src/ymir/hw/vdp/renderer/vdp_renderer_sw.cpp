@@ -4137,13 +4137,14 @@ FORCE_INLINE void SoftwareVDPRenderer::VDP2ComposeLine(uint32 y, const VDP2Regs 
         for (uint32 x = 0; Color888 &outputColor : framebufferOutput) {
             if (layer0ColorOffsetEnabled[x]) {
                 const auto &colorOffset = regs2.colorOffset[regs2.colorOffsetSelect[scanline_layers[x][0]]];
-                outputColor = {
-                    .r = kColorOffsetLUT[colorOffset.r][outputColor.r],
-                    .g = kColorOffsetLUT[colorOffset.g][outputColor.g],
-                    .b = kColorOffsetLUT[colorOffset.b][outputColor.b],
-                    .pad = 0,
-                    .msb = 0,
-                };
+                {
+                    // clang-15: designated init of anonymous union members fails in template context
+                    Color888 c{}; // u32 = 0 -> pad = msb = 0
+                    c.r = kColorOffsetLUT[colorOffset.r][outputColor.r];
+                    c.g = kColorOffsetLUT[colorOffset.g][outputColor.g];
+                    c.b = kColorOffsetLUT[colorOffset.b][outputColor.b];
+                    outputColor = c;
+                }
             }
             ++x;
         }
@@ -4195,13 +4196,14 @@ FORCE_INLINE void SoftwareVDPRenderer::VDP2ComposeLine(uint32 y, const VDP2Regs 
             for (uint32 x = 0; Color888 &mesheColor : meshOut) {
                 const auto &colorOffset = regs2.colorOffset[regs2.colorOffsetSelect[LYR_Sprite]];
                 if (colorOffset.nonZero) {
-                    mesheColor = {
-                        .r = kColorOffsetLUT[colorOffset.r][mesheColor.r],
-                        .g = kColorOffsetLUT[colorOffset.g][mesheColor.g],
-                        .b = kColorOffsetLUT[colorOffset.b][mesheColor.b],
-                        .pad = 0,
-                        .msb = 0,
-                    };
+                    {
+                        // clang-15: designated init of anonymous union members fails in template context
+                        Color888 c{}; // u32 = 0 -> pad = msb = 0
+                        c.r = kColorOffsetLUT[colorOffset.r][mesheColor.r];
+                        c.g = kColorOffsetLUT[colorOffset.g][mesheColor.g];
+                        c.b = kColorOffsetLUT[colorOffset.b][mesheColor.b];
+                        mesheColor = c;
+                    }
                 }
                 ++x;
             }
