@@ -129,6 +129,10 @@
 #include <unordered_map>
 #include <vector>
 
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
+
 CMRC_DECLARE(Ymir_sdl3_rc);
 
 using clk = std::chrono::steady_clock;
@@ -927,6 +931,22 @@ void App::RunEmulator() {
             auto &sharedCtx = *static_cast<SharedContext *>(ctx);
             auto &screen = sharedCtx.screen;
             ++screen.VDP2Frames;
+
+            // Frametime log for benchmarking (TOPST D3-G): one CLOCK_MONOTONIC usec timestamp per emulated
+            // frame when FRAMETIME_LOG is set. Same CSV format as the RetroArch hook in Pyohwan/RetroArch.
+            static FILE *ftLog = [] {
+                const char *path = std::getenv("FRAMETIME_LOG");
+                FILE *f = path ? std::fopen(path, "w") : nullptr;
+                if (f) {
+                    std::setvbuf(f, nullptr, _IOLBF, 0);
+                }
+                return f;
+            }();
+            if (ftLog) {
+                timespec ts;
+                clock_gettime(CLOCK_MONOTONIC, &ts);
+                std::fprintf(ftLog, "%lld\n", (long long)ts.tv_sec * 1000000LL + ts.tv_nsec / 1000);
+            }
 
             // Limit emulation speed if requested and not using video sync.
             // When video sync is enabled, frame pacing is done by the GUI thread.
